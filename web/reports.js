@@ -13,14 +13,12 @@
       ["contractorWaste","ТБО подрядчиков, т"],["accumulatedWaste","Накопление ТБО, т"],["nzgImport","Завоз НЗГ/НШ, т"],["btmImport","Завоз БТМ, т"],
       ["nveRocking","Раскачка НВЭ, т"],["pressed","Прессование, т"],["stored","Складирование, т"],["dieselReceived","Поступление ДТ, т"],["dieselBalance","Остаток ДТ, т"]
     ];
-    return `<section class="card"><h2>Суточный отчёт мастера</h2><form id="daily-form" class="grid">
-      ${input("date","Дата","date",d.date || new Date().toISOString().slice(0,10))}${input("landfill","Полигон","text",d.landfill)}${mass.map(([n,l]) => input(n,l,"number",d[n])).join("")}
-      ${input("shiftPeople","Численность вахты","number",d.shiftPeople)}${input("transport","Транспорт и спецтехника","text",d.transport)}
-      ${input("plantState","Состояние установки","text",d.plantState)}${input("mapState","Состояние карты","text",d.mapState)}${input("geyser1","Гейзер-1","text",d.geyser1)}${input("geyser2","Гейзер-2","text",d.geyser2)}
-      <div class="field full"><label for="repair">Ремонт</label><textarea id="repair" name="repair">${esc(d.repair)}</textarea></div><div class="field full"><label for="comment">Комментарий</label><textarea id="comment" name="comment">${esc(d.comment)}</textarea></div>
-      <div class="full"><h3>Шесть обязательных фото</h3><div class="photo-grid">${M.PHOTO_FIELDS.map(([key,label]) => `<div class="photo"><label for="photo-${key}">${label}</label><input id="photo-${key}" name="photo-${key}" type="file" accept="image/*" capture="environment" required></div>`).join("")}</div></div>
-      <div id="daily-error" class="error full"></div><div id="daily-preview" class="preview full">${d.date ? esc(M.format(d)) : "Предпросмотр появится после заполнения"}</div>
-      <div class="actions full"><button class="secondary" type="button" id="save-draft">Сохранить черновик</button><button class="primary" type="submit">Отправить отчёт</button></div></form></section>`;
+    return `<main class="workspace"><div class="page-heading"><span class="eyebrow">Суточная сводка</span><h1>Отчёт мастера</h1><p>Заполните показатели смены и приложите шесть фотографий.</p></div><section class="card form-card"><form id="daily-form">
+      <fieldset><legend><span>1</span> Основные данные</legend><div class="grid">${input("date","Дата","date",d.date || new Date().toISOString().slice(0,10))}${input("landfill","Полигон","text",d.landfill)}${mass.map(([n,l]) => input(n,l,"number",d[n])).join("")}</div></fieldset>
+      <fieldset><legend><span>2</span> Состояние и ресурсы</legend><div class="grid">${input("shiftPeople","Численность вахты","number",d.shiftPeople)}${input("transport","Транспорт и спецтехника","text",d.transport)}${input("plantState","Состояние установки","text",d.plantState)}${input("mapState","Состояние карты","text",d.mapState)}${input("geyser1","Гейзер-1","text",d.geyser1)}${input("geyser2","Гейзер-2","text",d.geyser2)}<div class="field full"><label for="repair">Ремонт</label><textarea id="repair" name="repair">${esc(d.repair)}</textarea></div><div class="field full"><label for="comment">Комментарий</label><textarea id="comment" name="comment">${esc(d.comment)}</textarea></div></div></fieldset>
+      <fieldset><legend><span>3</span> Фотофиксация <em>6 обязательных фото</em></legend><div class="photo-grid">${M.PHOTO_FIELDS.map(([key,label]) => `<label class="photo" for="photo-${key}"><input id="photo-${key}" name="photo-${key}" type="file" accept="image/*" capture="environment" required><b>＋</b><strong>${label}</strong><small>Снять или выбрать</small></label>`).join("")}</div></fieldset>
+      <div id="daily-preview" class="preview">${d.date ? esc(M.format(d)) : "Предпросмотр появится после заполнения"}</div><div class="actions"><button class="secondary" type="button" id="save-draft">Сохранить черновик</button><button class="primary" type="submit">Отправить отчёт</button></div><div id="daily-error" class="error"></div>
+    </form></section></main>`;
   }
   function collect(form, existingPhotos) {
     const data = Object.fromEntries(new FormData(form).entries());
