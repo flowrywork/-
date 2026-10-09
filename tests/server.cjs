@@ -12,4 +12,5 @@ assert.match(code, /actor\.role===\"itr\"\|\|r\[2\]===actor\.login/);
 assert.match(model, /supplied\.length !== DAILY_PHOTO_FIELDS\.length/);
 assert.match(reports, /validateDailyReport_/);
 assert.match(code, /Масса, т/);
+assert.match(code, /var expected=5/);
 console.log("server: ok");

@@ -64,7 +64,7 @@ function listEntries_(actor) {
 }
 function saveEntry_(actor,payload) {
   if(actor.role!=="master")throw new Error("Недостаточно прав");
-  var expected=payload.type==="NSO"?3:1;if(["NSO","TBO"].indexOf(payload.type)<0||!payload.vehicle||Number(payload.mass)<=0||(payload.photos||[]).length!==expected)throw new Error("Проверьте обязательные поля и фотографии");
+  var expected=5;if(["NSO","TBO"].indexOf(payload.type)<0||!payload.vehicle||!payload.ttn||Number(payload.mass)<=0||(payload.photos||[]).length!==expected)throw new Error("Проверьте обязательные поля и пять фотографий");
   var sheet=db_().getSheetByName(SHEETS.entries),rows=sheet.getDataRange().getValues(),existing=rows.slice(1).find(function(r){return r[1]===payload.requestId;});if(existing)return{id:existing[0],requestId:existing[1]};
   var id=Utilities.getUuid(),photos=savePhotos_(payload.photos,id);sheet.appendRow([id,payload.requestId,actor.login,new Date(),payload.type,payload.vehicle,Number(payload.mass),payload.ttn||"",JSON.stringify(photos),false,"",""]);return{id:id,requestId:payload.requestId};
 }

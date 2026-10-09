@@ -25,7 +25,7 @@ button { cursor: pointer; }
 .primary:hover { background: #155b45; }
 .secondary { border: 1px solid #cfdad6; border-radius: 6px; padding: 8px 12px; background: #fff; color: #24483d; font-weight: 650; }
 
-.shell { width: min(100%, 920px); min-height: 100vh; margin: auto; background: #edf2f0; box-shadow: 0 0 0 1px #dfe7e3; }
+.shell { width: min(100%, 1180px); min-height: 100vh; margin: auto; background: #edf2f0; box-shadow: 0 0 0 1px #dfe7e3; }
 .topbar { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--green-950); color: #fff; padding: 14px 20px; }
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand > span:last-child { display: grid; gap: 1px; }
@@ -65,6 +65,7 @@ legend em { margin-left: 5px; color: #73857e; font-size: 10px; font-style: norma
 .field input, .field textarea { padding: 10px; font-size: 12px; }
 .full { grid-column: 1/-1; }
 .photo-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.reception-photos { grid-template-columns: repeat(5,minmax(0,1fr)); }
 .photo { min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 10px 5px; border: 1px solid #cfdad6; border-radius: 7px; background: #f7faf8; text-align: center; transition: .15s; }
 .photo:hover, .photo.selected { border-color: #d2a92b; background: #fffdf5; }
 .photo input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
@@ -76,6 +77,25 @@ legend em { margin-left: 5px; color: #73857e; font-size: 10px; font-style: norma
 .actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 13px; }
 .filters { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 8px; margin-bottom: 12px; }
 .filters input, .filters select { padding: 9px; font-size: 11px; }
+.journal-layout { display: grid; grid-template-columns: minmax(0,1fr) 220px; gap: 14px; align-items: start; margin-bottom: 14px; }
+.calendar-card { padding: 14px; background: #fff; border: 1px solid #dfe7e3; border-radius: 7px; }
+.calendar-card > header { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; margin-bottom: 14px; text-align: center; }
+.calendar-card > header button { width: 32px; height: 32px; border: 1px solid #d8e2de; border-radius: 6px; background: #fff; color: #385248; }
+.calendar-card > header strong { font-size: 15px; text-transform: lowercase; }
+.weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 5px; }
+.weekdays { margin-bottom: 5px; }
+.weekdays span { padding: 5px; color: #788982; font-size: 9px; text-align: center; }
+.calendar-day { min-width: 0; min-height: 65px; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 7px; border: 1px solid #e0e7e4; border-radius: 6px; background: #fafcfb; color: #344b43; text-align: left; }
+.calendar-day span { font-size: 10px; font-weight: 700; }
+.calendar-day small { font-size: 8px; color: #4b6b60; }
+.calendar-day.has-entry { border-color: #a8dfc9; background: #eaf9f2; }
+.calendar-day.selected { border-color: #1e795a; box-shadow: inset 0 0 0 1px #1e795a; }
+.calendar-day.blank { border-color: transparent; background: transparent; }
+.calendar-filters { display: grid; gap: 12px; padding: 15px; background: #fff; border: 1px solid #dfe7e3; border-radius: 7px; }
+.calendar-filters h2 { margin: 0 0 2px; font-size: 14px; }
+.calendar-filters label { display: grid; gap: 5px; color: #40574f; font-size: 10px; font-weight: 700; }
+.calendar-filters input, .calendar-filters select { width: 100%; min-width: 0; padding: 9px; border: 1px solid #cbd8d3; border-radius: 6px; background: #fff; color: #18352c; font-size: 10px; }
+.clear-date[hidden] { display: none; }
 .list { display: grid; gap: 8px; padding: 12px; }
 .item { border: 1px solid #dce5e1; border-radius: 6px; padding: 12px; font-size: 11px; }
 .item-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 6px; }
@@ -99,6 +119,11 @@ legend em { margin-left: 5px; color: #73857e; font-size: 10px; font-style: norma
   .page-heading h1 { font-size: 22px; }
   .grid { grid-template-columns: 1fr 1fr; }
   .filters { grid-template-columns: 1fr; }
+  .journal-layout { grid-template-columns: 1fr; }
+  .calendar-filters { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .calendar-filters h2, .clear-date { grid-column: 1/-1; }
+  .calendar-day { min-height: 54px; padding: 5px; }
+  .reception-photos { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .photo { min-height: 88px; }
 }
 
@@ -110,5 +135,12 @@ legend em { margin-left: 5px; color: #73857e; font-size: 10px; font-style: norma
   .stat small { font-size: 8px; }
   .stat strong { font-size: 14px; }
   .photo-grid { gap: 5px; }
+  .reception-photos { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .photo { padding: 7px 3px; }
+  .calendar-card { padding: 9px; }
+  .weekdays, .calendar-grid { gap: 3px; }
+  .calendar-day { min-height: 46px; padding: 4px; }
+  .calendar-day small { font-size: 7px; }
+  .calendar-filters { grid-template-columns: 1fr; }
+  .calendar-filters h2, .clear-date { grid-column: auto; }
 }
