@@ -111,6 +111,36 @@ legend em { margin-left: 5px; color: #73857e; font-size: 10px; font-style: norma
 .preview { margin-top: 10px; padding: 14px; border-radius: 6px; background: #f3f7f5; white-space: pre-wrap; font-size: 11px; }
 .toast { position: fixed; left: 50%; bottom: 24px; z-index: 20; transform: translate(-50%,20px); opacity: 0; padding: 10px 16px; border-radius: 999px; background: #163b2d; color: #fff; font-size: 12px; transition: .2s; pointer-events: none; }
 .toast.show { opacity: 1; transform: translate(-50%,0); }
+.worker-workspace { max-width: 760px; margin: 0 auto; }
+.shift-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px; margin-bottom: 12px; border: 1px solid #dbe4e0; border-radius: 10px; background: #fff; }
+.shift-card > div { min-width: 0; display: grid; grid-template-columns: auto 1fr; column-gap: 9px; align-items: center; }
+.shift-card strong { font-size: 15px; }
+.shift-card small { grid-column: 2; color: #75867f; font-size: 10px; }
+.shift-indicator { grid-row: 1/3; width: 13px; height: 13px; border-radius: 50%; background: #aab8b3; box-shadow: 0 0 0 5px #aab8b31f; }
+.shift-card.active .shift-indicator { background: #35b46d; box-shadow: 0 0 0 5px #35b46d1f; }
+.worker-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.worker-stats > div { display: grid; gap: 2px; padding: 16px; border: 1px solid #dfe7e3; border-radius: 9px; background: #fff; }
+.worker-stats strong { font-size: 24px; color: #174e3c; }
+.worker-stats span { color: #71827b; font-size: 10px; }
+.worker-tip { padding: 17px; }
+.worker-tip p { margin: 6px 0 0; color: #687b74; font-size: 12px; }
+.task-list { display: grid; gap: 12px; }
+.task-card { min-width: 0; padding: 16px; border: 1px solid #dce5e1; border-radius: 10px; background: #fff; box-shadow: 0 2px 8px #163b2d0a; }
+.task-card h3 { margin: 10px 0 5px; color: #1b332b; font-size: 16px; }
+.task-card > p { margin: 0 0 12px; color: #667a72; font-size: 12px; overflow-wrap: anywhere; }
+.task-top, .task-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.priority { padding: 4px 8px; border-radius: 999px; background: #eaf1ee; color: #4b665c; font-size: 9px; font-weight: 750; }
+.priority.urgent { background: #ffebe7; color: #a23828; }
+.task-meta { padding-top: 10px; border-top: 1px solid #e6ece9; color: #71827b; font-size: 10px; }
+.task-action { width: 100%; min-height: 46px; margin-top: 14px; }
+.complete-box { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #e1e9e5; }
+.complete-box label { display: grid; gap: 5px; color: #3a554b; font-size: 10px; font-weight: 750; }
+.complete-box textarea { width: 100%; min-height: 86px; resize: vertical; padding: 11px; border: 1px solid #cbd8d3; border-radius: 7px; font: inherit; font-size: 16px; }
+.task-upload { padding: 13px; border: 1px dashed #a9beb5; border-radius: 8px; background: #f7faf8; }
+.task-upload input { width: 100%; margin-top: 4px; font-size: 12px; }
+.task-result { margin-top: 13px; padding: 12px; border-radius: 7px; background: #edf8f2; }
+.task-result p { margin: 5px 0; color: #3f5c51; font-size: 11px; }
+.task-result small { color: #668078; }
 
 @media (max-width: 680px) {
   body { background: #edf2f0; }
@@ -157,6 +187,10 @@ legend em { margin-left: 5px; color: #73857e; font-size: 10px; font-style: norma
   .calendar-day small b { font-weight: 800; }
   .list { padding: 10px; }
   .item { overflow-wrap: anywhere; }
+  .shift-card { align-items: stretch; flex-direction: column; }
+  .shift-card button { min-height: 46px; }
+  .worker-stats > div { min-height: 86px; }
+  .task-card { padding: 14px; }
 }
 
 @media (max-width: 390px) {

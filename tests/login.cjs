@@ -7,4 +7,5 @@ assert.match(app, />Войти</);
 assert.doesNotMatch(app, /Восстановить пароль|Добавить на главный экран/);
 assert.match(app, /MasterDemo123!/);
 assert.match(app, /ItrDemo123!/);
+assert.match(app, /WorkerDemo123!/);
 console.log("login: ok");

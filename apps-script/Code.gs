@@ -1,5 +1,6 @@
-var SHEETS = { users:"Пользователи", sessions:"Сессии", entries:"Приёмка", daily:"Суточные отчёты" };
+var SHEETS = { users:"Пользователи", sessions:"Сессии", entries:"Приёмка", daily:"Суточные отчёты", tasks:"Задания", shifts:"Смены" };
 var ENTRY_HEADERS = ["ID","Request ID","Автор","Дата создания","Тип","ТС","Масса, т","ТТН","Фото JSON","Подтверждено","Подтвердил","Дата подтверждения"];
+var TASK_HEADERS = ["ID","Название","Описание","Срок","Приоритет","Исполнитель","Статус","Создал","Создано","Начато","Завершено","Результат","Фото JSON"];
 
 function setup() {
   var props = PropertiesService.getScriptProperties();
@@ -12,8 +13,11 @@ function setup() {
   ensureSheet_(ss,SHEETS.sessions,["Токен","Логин","Роль","Создана","Истекает","Отозвана"]);
   ensureSheet_(ss,SHEETS.entries,ENTRY_HEADERS);
   ensureSheet_(ss,SHEETS.daily,DAILY_HEADERS);
+  ensureSheet_(ss,SHEETS.tasks,TASK_HEADERS);
+  ensureSheet_(ss,SHEETS.shifts,["ID","Рабочий","Начало","Завершение"]);
   seedUser_(ss,"master","Мастер","master","MasterDemo123!");
   seedUser_(ss,"itr","ИТР","itr","ItrDemo123!");
+  seedUser_(ss,"worker","Рабочий полигона","worker","WorkerDemo123!");
   return { spreadsheetId:ss.getId(), folderId:props.getProperty("PHOTO_FOLDER_ID") };
 }
 
@@ -30,6 +34,11 @@ function doPost(event) {
     else if (action === "confirmEntry") result = confirmEntry_(actor,payload);
     else if (action === "saveDaily") result = saveDaily_(actor,payload);
     else if (action === "listDaily") result = listDaily_(actor);
+    else if (action === "getShift") result = getShift_(actor);
+    else if (action === "toggleShift") result = toggleShift_(actor);
+    else if (action === "listTasks") result = listTasks_(actor);
+    else if (action === "saveTask") result = saveTask_(actor,payload);
+    else if (action === "updateTask") result = updateTask_(actor,payload);
     else throw new Error("Неизвестное действие");
     return output_({ok:true,data:result});
   } catch (error) { return output_({ok:false,error:error.message}); }
@@ -75,4 +84,27 @@ function confirmEntry_(actor,payload) {
 function savePhotos_(photos,prefix) {
   var folder=DriveApp.getFolderById(PropertiesService.getScriptProperties().getProperty("PHOTO_FOLDER_ID"));
   return (photos||[]).map(function(photo,index){if(!photo.data)throw new Error("Файл фотографии не передан");var match=photo.data.match(/^data:([^;]+);base64,(.+)$/);if(!match)throw new Error("Некорректное фото");var file=folder.createFile(Utilities.newBlob(Utilities.base64Decode(match[2]),match[1],prefix+"-"+(index+1)));return{id:file.getId(),name:photo.name||file.getName()};});
+}
+
+function getShift_(actor) {
+  if(actor.role!=="worker")return null;var rows=db_().getSheetByName(SHEETS.shifts).getDataRange().getValues();
+  for(var i=rows.length-1;i>0;i--)if(rows[i][1]===actor.login&&!rows[i][3])return{id:rows[i][0],worker:rows[i][1],startedAt:rows[i][2]};return null;
+}
+function toggleShift_(actor) {
+  if(actor.role!=="worker")throw new Error("Недостаточно прав");var sheet=db_().getSheetByName(SHEETS.shifts),rows=sheet.getDataRange().getValues();
+  for(var i=rows.length-1;i>0;i--)if(rows[i][1]===actor.login&&!rows[i][3]){sheet.getRange(i+1,4).setValue(new Date());return null;}
+  var shift={id:Utilities.getUuid(),worker:actor.login,startedAt:new Date()};sheet.appendRow([shift.id,shift.worker,shift.startedAt,""]);return shift;
+}
+function listTasks_(actor) {
+  var rows=db_().getSheetByName(SHEETS.tasks).getDataRange().getValues().slice(1);
+  return rows.filter(function(r){return actor.role!=="worker"||r[5]===actor.login;}).map(function(r){return{id:r[0],title:r[1],description:r[2],dueDate:Utilities.formatDate(new Date(r[3]),Session.getScriptTimeZone(),"yyyy-MM-dd"),priority:r[4],assignee:r[5],status:r[6],createdBy:r[7],createdAt:r[8],startedAt:r[9],completedAt:r[10],comment:r[11],photos:JSON.parse(r[12]||"[]")};});
+}
+function saveTask_(actor,payload) {
+  if(actor.role!=="master")throw new Error("Недостаточно прав");if(!payload.title||!payload.dueDate||!payload.assignee)throw new Error("Заполните обязательные поля");
+  var task={id:Utilities.getUuid(),title:payload.title,description:payload.description||"",dueDate:payload.dueDate,priority:payload.priority||"Обычный",assignee:payload.assignee};
+  db_().getSheetByName(SHEETS.tasks).appendRow([task.id,task.title,task.description,new Date(task.dueDate),task.priority,task.assignee,"new",actor.login,new Date(),"","","","[]"]);return task;
+}
+function updateTask_(actor,payload) {
+  if(actor.role!=="worker")throw new Error("Недостаточно прав");var sheet=db_().getSheetByName(SHEETS.tasks),rows=sheet.getDataRange().getValues();
+  for(var i=1;i<rows.length;i++)if(rows[i][0]===payload.id&&rows[i][5]===actor.login){if(payload.status==="in_progress"){sheet.getRange(i+1,7).setValue("in_progress");sheet.getRange(i+1,10).setValue(new Date());return{id:payload.id,status:"in_progress"};}if(payload.status==="done"){if(!String(payload.comment||"").trim()||!(payload.photos||[]).length)throw new Error("Добавьте результат и хотя бы одно фото");var photos=savePhotos_(payload.photos,payload.id);sheet.getRange(i+1,7).setValue("done");sheet.getRange(i+1,11,1,3).setValues([[new Date(),payload.comment,JSON.stringify(photos)]]);return{id:payload.id,status:"done"};}throw new Error("Недопустимый статус");}throw new Error("Задание не найдено");
 }

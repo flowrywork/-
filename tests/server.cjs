@@ -13,4 +13,7 @@ assert.match(model, /supplied\.length !== DAILY_PHOTO_FIELDS\.length/);
 assert.match(reports, /validateDailyReport_/);
 assert.match(code, /Масса, т/);
 assert.match(code, /var expected=5/);
+assert.match(code, /tasks:\"Задания\"/);
+assert.match(code, /seedUser_\(ss,\"worker\"/);
+assert.match(code, /function updateTask_/);
 console.log("server: ok");
