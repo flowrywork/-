@@ -1,0 +1,10 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const manifest = JSON.parse(fs.readFileSync("web/manifest.json", "utf8"));
+const demo = fs.readFileSync("Service-Ecology-DEMO-0.3.0.html", "utf8");
+assert.equal(manifest.display, "standalone");
+assert.match(demo, /<style>/);
+assert.match(demo, /eco-mvp-v030/);
+assert.doesNotMatch(demo, /src=\"(?:config|report-model|reports|app)\.js\"/);
+assert.doesNotMatch(demo, /rel=\"manifest\"/);
+console.log("preview: ok");

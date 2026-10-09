@@ -1,0 +1,15 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const code = fs.readFileSync("apps-script/Code.gs", "utf8");
+const reports = fs.readFileSync("apps-script/Reports.gs", "utf8");
+const model = fs.readFileSync("apps-script/ReportModel.gs", "utf8");
+const crypto = fs.readFileSync("apps-script/Crypto.gs", "utf8");
+assert.match(crypto, /PBKDF2_ITERATIONS = 600000/);
+assert.match(code, /actor\.role!==\"master\"/);
+assert.match(code, /actor\.role!==\"itr\"/);
+assert.match(code, /requestId/);
+assert.match(code, /actor\.role===\"itr\"\|\|r\[2\]===actor\.login/);
+assert.match(model, /supplied\.length !== DAILY_PHOTO_FIELDS\.length/);
+assert.match(reports, /validateDailyReport_/);
+assert.match(code, /Масса, т/);
+console.log("server: ok");

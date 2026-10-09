@@ -1,0 +1,12 @@
+const assert = require("node:assert/strict");
+const model = require("../web/report-model.js");
+assert.equal(model.PHOTO_FIELDS.length, 6);
+assert.deepEqual(model.PHOTO_FIELDS.map((x) => x[1]), ["Весы с грузом","Весы без груза","ТС с грузом","ТС без груза","ТТН","ТС спереди"]);
+const photos = Object.fromEntries(model.PHOTO_FIELDS.map(([key]) => [key, { name: key + ".jpg" }]));
+const valid = { date:"2026-10-09", landfill:"Полигон", customerWaste:10, ownCollection:3, contractorWaste:2, photos };
+assert.deepEqual(model.validate(valid), []);
+assert.match(model.format(valid), /итого 12 т/);
+assert.doesNotMatch(model.format(valid), /м³|кг/);
+assert.ok(model.validate({ ...valid, photos:{ ...photos, ttn:null } }).length);
+assert.ok(model.validate({ ...valid, ownCollection:11 }).length);
+console.log("daily: ok");

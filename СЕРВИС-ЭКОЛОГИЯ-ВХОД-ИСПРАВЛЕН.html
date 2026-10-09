@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d6b4d">
+  <title>Сервис Экология</title>
+  
+  <style>:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#18352c;background:#edf4f0;line-height:1.45}*{box-sizing:border-box}body{margin:0;min-height:100vh}button,input,select,textarea{font:inherit}button{cursor:pointer}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.login form{display:grid;gap:14px;width:min(100%,360px);padding:28px;background:#fff;border-radius:24px;box-shadow:0 18px 45px #163b2d1a}.login input,.field input,.field select,.field textarea{width:100%;border:1px solid #c6d8d0;border-radius:12px;padding:12px;background:#fff}.primary{border:0;border-radius:12px;padding:13px 18px;background:#0d6b4d;color:#fff;font-weight:700}.secondary{border:1px solid #0d6b4d;border-radius:12px;padding:10px 14px;background:#fff;color:#0d6b4d}.shell{max-width:1050px;margin:auto;padding:16px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#0d6b4d;color:#fff;padding:14px 18px;border-radius:18px}.topbar h1{font-size:18px;margin:0}.topbar button{background:#ffffff20;color:#fff;border:0;border-radius:10px;padding:8px 12px}.tabs{display:flex;gap:8px;overflow:auto;padding:14px 0}.tabs button{white-space:nowrap;border:0;border-radius:999px;padding:9px 14px;background:#dbe9e2;color:#194b3c}.tabs button.active{background:#0d6b4d;color:#fff}.card{background:#fff;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 7px 25px #163b2d0d}.card h2,.card h3{margin-top:0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:grid;gap:5px}.field label{font-size:13px;font-weight:700}.full{grid-column:1/-1}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.photo{border:1px dashed #92ad9f;border-radius:13px;padding:10px;min-width:0}.photo label{font-size:12px;font-weight:700;display:block;margin-bottom:6px}.photo input{max-width:100%;font-size:12px}.list{display:grid;gap:10px}.item{border:1px solid #dce8e2;border-radius:14px;padding:13px}.item-head{display:flex;justify-content:space-between;gap:8px}.badge{display:inline-block;border-radius:999px;padding:3px 8px;background:#e7f1ec;font-size:12px}.badge.ok{background:#d4f1df;color:#176536}.error{color:#a22828;white-space:pre-line}.preview{white-space:pre-wrap;background:#f3f7f5;border-radius:12px;padding:14px;margin-top:10px}.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;background:#163b2d;color:#fff;padding:10px 16px;border-radius:999px;transition:.2s;pointer-events:none}.toast.show{opacity:1;transform:translate(-50%,0)}@media(max-width:680px){.shell{padding:10px}.grid{grid-template-columns:1fr}.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:14px}}
+</style>
+</head>
+<body>
+  <main id="app" aria-live="polite"></main>
+  <div id="toast" class="toast" role="status"></div>
+  <script>window.ECO_CONFIG = Object.freeze({ apiUrl: "" });
+</script>
+  <script>(function (root) {
+  "use strict";
+  const PHOTO_FIELDS = Object.freeze([
+    ["scaleLoaded", "Весы с грузом"], ["scaleEmpty", "Весы без груза"],
+    ["vehicleLoaded", "ТС с грузом"], ["vehicleEmpty", "ТС без груза"],
+    ["ttn", "ТТН"], ["vehicleFront", "ТС спереди"]
+  ]);
+  const MASS_FIELDS = Object.freeze([
+    "upnsh08Night", "upnsh08Day", "upnsh11Night", "upnsh11Day", "upnsh13Night", "upnsh13Day",
+    "customerWaste", "ownCollection", "contractorWaste", "accumulatedWaste", "nzgImport", "btmImport",
+    "nveRocking", "pressed", "stored", "dieselReceived", "dieselBalance"
+  ]);
+  function number(value) {
+    const parsed = Number(String(value == null ? "" : value).replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  function validate(report) {
+    const errors = [];
+    if (!report.date) errors.push("Укажите дату");
+    if (!String(report.landfill || "").trim()) errors.push("Укажите полигон");
+    MASS_FIELDS.forEach((field) => { if (number(report[field]) < 0) errors.push("Масса не может быть отрицательной"); });
+    if (number(report.ownCollection) > number(report.customerWaste)) errors.push("Наш сбор не может превышать массу от заказчика");
+    const photos = report.photos || {};
+    PHOTO_FIELDS.forEach(([key, label]) => { if (!photos[key]) errors.push("Добавьте фото: " + label); });
+    if (Object.keys(photos).filter((key) => photos[key]).length !== PHOTO_FIELDS.length) errors.push("Нужно ровно шесть фотографий");
+    return [...new Set(errors)];
+  }
+  function format(report) {
+    const totalWaste = number(report.customerWaste) + number(report.contractorWaste);
+    return [
+      "Суточный отчёт за " + (report.date || "—"), "Полигон: " + (report.landfill || "—"),
+      "УПНШ 08: ночь " + number(report.upnsh08Night) + " т; день " + number(report.upnsh08Day) + " т",
+      "УПНШ 11: ночь " + number(report.upnsh11Night) + " т; день " + number(report.upnsh11Day) + " т",
+      "УПНШ 13: ночь " + number(report.upnsh13Night) + " т; день " + number(report.upnsh13Day) + " т",
+      "ТБО: заказчик " + number(report.customerWaste) + " т (наш сбор " + number(report.ownCollection) + " т), подрядчики " + number(report.contractorWaste) + " т, итого " + totalWaste + " т",
+      "Состояние установки: " + (report.plantState || "—"), "Ремонт: " + (report.repair || "—"), "Комментарий: " + (report.comment || "—")
+    ].join("\n");
+  }
+  const api = { PHOTO_FIELDS, MASS_FIELDS, number, validate, format };
+  root.EcoReportModel = api;
+  if (typeof module !== "undefined") module.exports = api;
+})(typeof window !== "undefined" ? window : globalThis);
+</script>
+  <script>(function (root) {
+  "use strict";
+  const M = root.EcoReportModel;
+  const esc = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char]);
+  function input(name, label, type, value) {
+    return `<div class="field"><label for="${name}">${label}</label><input id="${name}" name="${name}" type="${type || "text"}" value="${esc(value)}" ${type === "number" ? 'min="0" step="0.001" inputmode="decimal"' : ""}></div>`;
+  }
+  function dailyForm(draft) {
+    const d = draft || {};
+    const mass = [
+      ["upnsh08Night","УПНШ 08 — ночь, т"],["upnsh08Day","УПНШ 08 — день, т"],["upnsh11Night","УПНШ 11 — ночь, т"],["upnsh11Day","УПНШ 11 — день, т"],
+      ["upnsh13Night","УПНШ 13 — ночь, т"],["upnsh13Day","УПНШ 13 — день, т"],["customerWaste","ТБО от заказчика, т"],["ownCollection","Наш сбор (часть заказчика), т"],
+      ["contractorWaste","ТБО подрядчиков, т"],["accumulatedWaste","Накопление ТБО, т"],["nzgImport","Завоз НЗГ/НШ, т"],["btmImport","Завоз БТМ, т"],
+      ["nveRocking","Раскачка НВЭ, т"],["pressed","Прессование, т"],["stored","Складирование, т"],["dieselReceived","Поступление ДТ, т"],["dieselBalance","Остаток ДТ, т"]
+    ];
+    return `<section class="card"><h2>Суточный отчёт мастера</h2><form id="daily-form" class="grid">
+      ${input("date","Дата","date",d.date || new Date().toISOString().slice(0,10))}${input("landfill","Полигон","text",d.landfill)}${mass.map(([n,l]) => input(n,l,"number",d[n])).join("")}
+      ${input("shiftPeople","Численность вахты","number",d.shiftPeople)}${input("transport","Транспорт и спецтехника","text",d.transport)}
+      ${input("plantState","Состояние установки","text",d.plantState)}${input("mapState","Состояние карты","text",d.mapState)}${input("geyser1","Гейзер-1","text",d.geyser1)}${input("geyser2","Гейзер-2","text",d.geyser2)}
+      <div class="field full"><label for="repair">Ремонт</label><textarea id="repair" name="repair">${esc(d.repair)}</textarea></div><div class="field full"><label for="comment">Комментарий</label><textarea id="comment" name="comment">${esc(d.comment)}</textarea></div>
+      <div class="full"><h3>Шесть обязательных фото</h3><div class="photo-grid">${M.PHOTO_FIELDS.map(([key,label]) => `<div class="photo"><label for="photo-${key}">${label}</label><input id="photo-${key}" name="photo-${key}" type="file" accept="image/*" capture="environment" required></div>`).join("")}</div></div>
+      <div id="daily-error" class="error full"></div><div id="daily-preview" class="preview full">${d.date ? esc(M.format(d)) : "Предпросмотр появится после заполнения"}</div>
+      <div class="actions full"><button class="secondary" type="button" id="save-draft">Сохранить черновик</button><button class="primary" type="submit">Отправить отчёт</button></div></form></section>`;
+  }
+  function collect(form, existingPhotos) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    const photos = Object.assign({}, existingPhotos || {});
+    M.PHOTO_FIELDS.forEach(([key]) => { const file = form.elements["photo-" + key].files[0]; if (file) photos[key] = { name:file.name, size:file.size, type:file.type }; delete data["photo-" + key]; });
+    data.photos = photos; return data;
+  }
+  root.EcoReports = { dailyForm, collect, esc };
+})(window);
+</script>
+  <script>(function () {
+  "use strict";
+  const app = document.getElementById("app");
+  const DB_NAME = "eco-mvp-v030";
+  const USERS = { master:{password:"MasterDemo123!",role:"master",name:"Мастер"}, itr:{password:"ItrDemo123!",role:"itr",name:"ИТР"} };
+  const memory = {};
+  function storage(kind) { try { const value=window[kind]; value.getItem("eco-access-test"); return value; } catch (_) { return null; } }
+  const localStore=storage("localStorage"), sessionStore=storage("sessionStorage");
+  const getValue=(store,name)=>store?store.getItem(name):(name in memory?memory[name]:null);
+  const setValue=(store,name,value)=>{if(store)store.setItem(name,value);else memory[name]=String(value);};
+  const removeValue=(store,name)=>{if(store)store.removeItem(name);else delete memory[name];};
+  let session = JSON.parse(getValue(sessionStore,"eco-session") || "null");
+  let active = "";
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-"+Math.random()).toString();
+  const key = (name) => DB_NAME + ":" + name;
+  const read = (name) => { try { return JSON.parse(getValue(localStore,key(name)) || "[]"); } catch (_) { return []; } };
+  const write = (name,value) => setValue(localStore,key(name),JSON.stringify(value));
+  const draftKey = () => key("daily-draft:" + session.login);
+  function toast(message){const node=document.getElementById("toast");node.textContent=message;node.classList.add("show");setTimeout(()=>node.classList.remove("show"),1800);}
+  function photoPayload(file) {
+    if (!window.ECO_CONFIG.apiUrl) return Promise.resolve({name:file.name,size:file.size,type:file.type});
+    return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error("Не удалось прочитать фото"));reader.onload=()=>{const image=new Image();image.onerror=()=>reject(new Error("Не удалось обработать фото"));image.onload=()=>{const limit=1600,scale=Math.min(1,limit/Math.max(image.width,image.height)),canvas=document.createElement("canvas");canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);const data=canvas.toDataURL("image/jpeg",.78);resolve({name:file.name,size:data.length,type:"image/jpeg",data});};image.src=reader.result;};reader.readAsDataURL(file);});
+  }
+
+  async function api(action,payload={}) {
+    if (!window.ECO_CONFIG.apiUrl) return demoApi(action,payload);
+    const response=await fetch(window.ECO_CONFIG.apiUrl,{method:"POST",body:JSON.stringify({action,sessionToken:session&&session.token,payload})});
+    const result=await response.json(); if(!result.ok) throw new Error(result.error||"Ошибка сервера"); return result.data;
+  }
+  function demoApi(action,payload) {
+    if(action==="login"){const user=USERS[payload.login];if(!user||user.password!==payload.password)throw new Error("Неверный логин или пароль");return{token:uid(),login:payload.login,role:user.role,name:user.name};}
+    if(!session)throw new Error("Требуется вход");
+    if(action==="listEntries")return read("entries").filter((x)=>session.role==="itr"||x.author===session.login);
+    if(action==="saveEntry"){const all=read("entries"),found=all.find((x)=>x.requestId===payload.requestId);if(found)return found;payload.id=uid();payload.author=session.login;payload.createdAt=new Date().toISOString();payload.confirmed=false;all.unshift(payload);write("entries",all);return payload;}
+    if(action==="confirmEntry"){if(session.role!=="itr")throw new Error("Недостаточно прав");const all=read("entries"),item=all.find((x)=>x.id===payload.id);if(!item)throw new Error("Запись не найдена");item.confirmed=true;item.confirmedAt=new Date().toISOString();write("entries",all);return item;}
+    if(action==="saveDaily"){if(session.role!=="master")throw new Error("Недостаточно прав");const errors=EcoReportModel.validate(payload);if(errors.length)throw new Error(errors.join("\n"));const all=read("daily"),found=all.find((x)=>x.requestId===payload.requestId);if(found)return found;payload.id=uid();payload.author=session.login;payload.createdAt=new Date().toISOString();all.unshift(payload);write("daily",all);return payload;}
+    if(action==="listDaily")return read("daily").filter((x)=>session.role==="itr"||x.author===session.login);
+    throw new Error("Неизвестное действие");
+  }
+  function loginView(){app.innerHTML='<section class="login"><form id="login-form"><input name="login" aria-label="Логин" autocomplete="username" placeholder="Логин" required><input name="password" aria-label="Пароль" type="password" autocomplete="current-password" placeholder="Пароль" required><button class="primary" id="login-button" type="button">Войти</button><div id="login-error" class="error"></div></form></section>';const form=document.getElementById("login-form"),login=async()=>{const loginValue=form.elements.login.value.trim().toLowerCase(),password=form.elements.password.value.trim();if(!loginValue||!password){document.getElementById("login-error").textContent="Введите логин и пароль";return;}try{session=await api("login",{login:loginValue,password});setValue(sessionStore,"eco-session",JSON.stringify(session));renderShell();}catch(error){document.getElementById("login-error").textContent=error.message;}};document.getElementById("login-button").onclick=login;form.addEventListener("keydown",(event)=>{if(event.key==="Enter"){event.preventDefault();login();}});}
+  const tabs=()=>session.role==="master"?[["nso","Приёмка НСО"],["tbo","Приёмка ТБО"],["journal","Мой журнал"],["daily","Суточный отчёт"]]:[["journal","Общий журнал"],["summary","Отчёт 14 дней"],["daily-list","Отчёты мастеров"]];
+  function renderShell(){active=active||tabs()[0][0];app.innerHTML=`<div class="shell"><header class="topbar"><h1>Сервис Экология · ${session.name}</h1><button id="logout">Выйти</button></header><nav class="tabs">${tabs().map(([id,label])=>`<button data-tab="${id}" class="${active===id?"active":""}">${label}</button>`).join("")}</nav><div id="content"></div></div>`;document.getElementById("logout").onclick=()=>{session=null;active="";removeValue(sessionStore,"eco-session");loginView();};document.querySelectorAll("[data-tab]").forEach((button)=>button.onclick=()=>{active=button.dataset.tab;renderShell();});renderContent();}
+  function receptionForm(type){const nso=type==="NSO";return `<section class="card"><h2>Приёмка ${type}</h2><form id="entry-form" class="grid"><input type="hidden" name="type" value="${type}"><input type="hidden" name="requestId" value="${uid()}"><div class="field"><label>${nso?"Номер машины":"Номер мусоровоза"}</label><input name="vehicle" required></div><div class="field"><label>Масса, т</label><input name="mass" type="number" min="0.001" step="0.001" inputmode="decimal" required></div>${nso?'<div class="field full"><label>ТТН</label><input name="ttn" required></div>':""}<div class="full"><h3>${nso?"Три обязательных фото":"Обязательное фото"}</h3><div class="photo-grid">${Array.from({length:nso?3:1},(_,i)=>`<div class="photo"><label>Фото ${i+1}</label><input name="photo${i+1}" type="file" accept="image/*" capture="environment" required></div>`).join("")}</div></div><div class="actions full"><button class="primary" type="submit">Сохранить</button></div><div id="entry-error" class="error full"></div></form></section>`;}
+  function bindReception(){document.getElementById("entry-form").onsubmit=async(event)=>{event.preventDefault();const form=event.currentTarget,data=Object.fromEntries(new FormData(form));data.mass=EcoReportModel.number(data.mass);data.photos=[];try{for(const input of form.querySelectorAll('input[type="file"]')){const file=input.files[0];if(file)data.photos.push(await photoPayload(file));delete data[input.name];}await api("saveEntry",data);toast("Запись сохранена");form.reset();form.requestId.value=uid();}catch(error){document.getElementById("entry-error").textContent=error.message;}};}
+  async function journalView(){const rows=await api("listEntries");document.getElementById("content").innerHTML=`<section class="card"><h2>${session.role==="itr"?"Общий журнал":"Мой журнал"}</h2><div class="list">${rows.length?rows.map((x)=>`<article class="item"><div class="item-head"><strong>${x.type} · ${EcoReports.esc(x.vehicle)}</strong><span class="badge ${x.confirmed?"ok":""}">${x.confirmed?"Подтверждено":"Ожидает"}</span></div><div>${x.mass} т · ${new Date(x.createdAt).toLocaleString("ru-RU")}</div>${session.role==="itr"&&!x.confirmed?`<div class="actions"><button class="secondary" data-confirm="${x.id}">Подтвердить</button></div>`:""}</article>`).join(""):"Записей пока нет"}</div></section>`;document.querySelectorAll("[data-confirm]").forEach((button)=>button.onclick=async()=>{await api("confirmEntry",{id:button.dataset.confirm});toast("Запись подтверждена");journalView();});}
+  async function summaryView(){const since=Date.now()-14*86400000,rows=(await api("listEntries")).filter((x)=>new Date(x.createdAt).getTime()>=since),totals=rows.reduce((a,x)=>(a[x.type]=(a[x.type]||0)+Number(x.mass),a),{});document.getElementById("content").innerHTML=`<section class="card"><h2>Сводка за 14 дней</h2><p>НСО: <strong>${(totals.NSO||0).toFixed(3)} т</strong></p><p>ТБО: <strong>${(totals.TBO||0).toFixed(3)} т</strong></p><div class="actions"><button id="csv" class="secondary">Скачать CSV</button></div></section>`;document.getElementById("csv").onclick=()=>{const csv="Тип;ТС;Масса, т;Дата;Статус\n"+rows.map((x)=>[x.type,x.vehicle,x.mass,x.createdAt,x.confirmed?"Подтверждено":"Ожидает"].join(";")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv"}));a.download="ecology-14-days.csv";a.click();URL.revokeObjectURL(a.href);};}
+  function bindDaily(){const form=document.getElementById("daily-form"),preview=document.getElementById("daily-preview"),saved=JSON.parse(getValue(localStore,draftKey())||"{}"),saveDraft=()=>{const report=update();setValue(localStore,draftKey(),JSON.stringify(report));};let timer;const update=()=>{const report=EcoReports.collect(form,saved.photos);preview.textContent=EcoReportModel.format(report);return report;};form.addEventListener("input",()=>{update();clearTimeout(timer);timer=setTimeout(saveDraft,500);});document.getElementById("save-draft").onclick=()=>{saveDraft();toast("Черновик сохранён");};form.onsubmit=async(event)=>{event.preventDefault();const report=update();report.requestId=uid();try{for(const [field] of EcoReportModel.PHOTO_FIELDS){const file=form.elements["photo-"+field].files[0];if(file)report.photos[field]=await photoPayload(file);}const errors=EcoReportModel.validate(report);if(errors.length){document.getElementById("daily-error").textContent=errors.join("\n");return;}await api("saveDaily",report);removeValue(localStore,draftKey());toast("Отчёт отправлен");active="journal";renderShell();}catch(error){document.getElementById("daily-error").textContent=error.message;}};}
+  async function dailyListView(){const reports=await api("listDaily");document.getElementById("content").innerHTML=`<section class="card"><h2>Суточные отчёты мастеров</h2><div class="list">${reports.length?reports.map((x)=>`<details class="item"><summary><strong>${x.date} · ${EcoReports.esc(x.landfill)}</strong> · ${EcoReports.esc(x.author)}</summary><div class="preview">${EcoReports.esc(EcoReportModel.format(x))}</div><div>${EcoReportModel.PHOTO_FIELDS.map(([k,l])=>`<span class="badge">${l}: ${EcoReports.esc(x.photos[k].name)}</span>`).join(" ")}</div></details>`).join(""):"Отчётов пока нет"}</div></section>`;}
+  async function renderContent(){const content=document.getElementById("content");try{if(active==="nso"||active==="tbo"){content.innerHTML=receptionForm(active.toUpperCase());bindReception();}else if(active==="journal")await journalView();else if(active==="summary")await summaryView();else if(active==="daily"){const draft=JSON.parse(getValue(localStore,draftKey())||"{}");content.innerHTML=EcoReports.dailyForm(draft);bindDaily();}else if(active==="daily-list")await dailyListView();}catch(error){content.innerHTML=`<section class="card error">${EcoReports.esc(error.message)}</section>`;}}
+  if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  session?renderShell():loginView();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const app = fs.readFileSync("web/app.js", "utf8");
+assert.match(app, /placeholder=\"Логин\"/);
+assert.match(app, /placeholder=\"Пароль\"/);
+assert.match(app, />Войти</);
+assert.doesNotMatch(app, /Восстановить пароль|Добавить на главный экран/);
+assert.match(app, /MasterDemo123!/);
+assert.match(app, /ItrDemo123!/);
+console.log("login: ok");
